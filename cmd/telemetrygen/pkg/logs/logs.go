@@ -124,6 +124,14 @@ func exporterFactory(cfg *Config, logger *zap.Logger) exporterFunc {
 func createExporter(cfg *Config, logger *zap.Logger) (sdklog.Exporter, error) {
 	var exp sdklog.Exporter
 	var err error
+
+	ctx := context.Background()
+	if cfg.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, cfg.Timeout)
+		defer cancel()
+	}
+
 	if cfg.UseHTTP {
 		var exporterOpts []otlploghttp.Option
 
@@ -132,7 +140,7 @@ func createExporter(cfg *Config, logger *zap.Logger) (sdklog.Exporter, error) {
 		if err != nil {
 			return nil, err
 		}
-		exp, err = otlploghttp.New(context.Background(), exporterOpts...)
+		exp, err = otlploghttp.New(ctx, exporterOpts...)
 		if err != nil {
 			return nil, fmt.Errorf("failed to obtain OTLP HTTP exporter: %w", err)
 		}
@@ -144,7 +152,7 @@ func createExporter(cfg *Config, logger *zap.Logger) (sdklog.Exporter, error) {
 		if err != nil {
 			return nil, err
 		}
-		exp, err = otlploggrpc.New(context.Background(), exporterOpts...)
+		exp, err = otlploggrpc.New(ctx, exporterOpts...)
 		if err != nil {
 			return nil, fmt.Errorf("failed to obtain OTLP gRPC exporter: %w", err)
 		}

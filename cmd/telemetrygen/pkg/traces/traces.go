@@ -34,6 +34,13 @@ func Start(cfg *Config) error {
 		return err
 	}
 
+	ctx := context.Background()
+	if cfg.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, cfg.Timeout)
+		defer cancel()
+	}
+
 	var exp *otlptrace.Exporter
 	if cfg.UseHTTP {
 		var exporterOpts []otlptracehttp.Option
@@ -43,7 +50,7 @@ func Start(cfg *Config) error {
 		if err != nil {
 			return err
 		}
-		exp, err = otlptracehttp.New(context.Background(), exporterOpts...)
+		exp, err = otlptracehttp.New(ctx, exporterOpts...)
 		if err != nil {
 			return fmt.Errorf("failed to obtain OTLP HTTP exporter: %w", err)
 		}
@@ -55,7 +62,7 @@ func Start(cfg *Config) error {
 		if err != nil {
 			return err
 		}
-		exp, err = otlptracegrpc.New(context.Background(), exporterOpts...)
+		exp, err = otlptracegrpc.New(ctx, exporterOpts...)
 		if err != nil {
 			return fmt.Errorf("failed to obtain OTLP gRPC exporter: %w", err)
 		}

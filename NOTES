@@ -1,0 +1,2 @@
+* metrics + logs do not respect batch, batchSize nor allowFailures
+* remove local_tests & go.mod & go.sum
