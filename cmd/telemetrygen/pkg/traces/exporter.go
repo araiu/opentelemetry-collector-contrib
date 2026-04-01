@@ -35,6 +35,10 @@ func grpcExporterOptions(cfg *Config) ([]otlptracegrpc.Option, error) {
 		grpcExpOpt = append(grpcExpOpt, otlptracegrpc.WithHeaders(cfg.GetHeaders()))
 	}
 
+	if cfg.Timeout > 0 {
+		grpcExpOpt = append(grpcExpOpt, otlptracegrpc.WithTimeout(cfg.Timeout))
+	}
+
 	return grpcExpOpt, nil
 }
 
@@ -60,6 +64,10 @@ func httpExporterOptions(cfg *Config) ([]otlptracehttp.Option, error) {
 
 	if len(cfg.Headers) > 0 {
 		httpExpOpt = append(httpExpOpt, otlptracehttp.WithHeaders(cfg.GetHeaders()))
+	}
+
+	if cfg.Timeout > 0 {
+		httpExpOpt = append(httpExpOpt, otlptracehttp.WithTimeout(cfg.Timeout))
 	}
 
 	return httpExpOpt, nil

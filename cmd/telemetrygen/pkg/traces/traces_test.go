@@ -523,6 +523,56 @@ func TestDefaultSpanLinksConfiguration(t *testing.T) {
 	assert.Equal(t, 0, cfg.NumSpanLinks, "Default NumSpanLinks should be 0")
 }
 
+func TestHTTPExporterOptions_Timeout(t *testing.T) {
+	for name, tc := range map[string]struct {
+		timeout      time.Duration
+		handlerDelay time.Duration
+		expectError  bool
+	}{
+		"TimeoutElapsed": {
+			timeout:      50 * time.Millisecond,
+			handlerDelay: 500 * time.Millisecond,
+			expectError:  true,
+		},
+		"TimeoutNotElapsed": {
+			timeout:     500 * time.Millisecond,
+			expectError: false,
+		},
+		"NoTimeout": {
+			timeout:     0,
+			expectError: false,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+				if tc.handlerDelay > 0 {
+					time.Sleep(tc.handlerDelay)
+				}
+			}))
+			defer srv.Close()
+			srvURL, _ := url.Parse(srv.URL)
+
+			cfg := Config{
+				Config: config.Config{
+					Insecure:       true,
+					CustomEndpoint: srvURL.Host,
+					Timeout:        tc.timeout,
+				},
+			}
+			opts, err := httpExporterOptions(&cfg)
+			require.NoError(t, err)
+			client := otlptracehttp.NewClient(opts...)
+
+			err = client.UploadTraces(t.Context(), []*tracepb.ResourceSpans{{}})
+			if tc.expectError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestSpanContextsBufferLimit(t *testing.T) {
 	w := &worker{
 		numSpanLinks:   2,
