@@ -4,7 +4,6 @@
 package logs
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -279,7 +278,7 @@ func TestHTTPExporterOptions_Timeout(t *testing.T) {
 
 			exp, err := otlploghttp.New(t.Context(), opts...)
 			require.NoError(t, err)
-			t.Cleanup(func() { _ = exp.Shutdown(context.Background()) })
+			t.Cleanup(func() { _ = exp.Shutdown(t.Context()) })
 
 			err = exp.Export(t.Context(), []sdklog.Record{{}})
 			if tc.expectError {

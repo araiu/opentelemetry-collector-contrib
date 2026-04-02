@@ -4,7 +4,6 @@
 package metrics
 
 import (
-	"context"
 	"encoding/hex"
 	"net/http"
 	"net/http/httptest"
@@ -347,7 +346,7 @@ func TestHTTPExporterOptions_Timeout(t *testing.T) {
 
 			exp, err := otlpmetrichttp.New(t.Context(), opts...)
 			require.NoError(t, err)
-			t.Cleanup(func() { _ = exp.Shutdown(context.Background()) })
+			t.Cleanup(func() { _ = exp.Shutdown(t.Context()) })
 
 			err = exp.Export(t.Context(), &metricdata.ResourceMetrics{})
 			if tc.expectError {
