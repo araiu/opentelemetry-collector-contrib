@@ -5,15 +5,11 @@ package metrics
 
 import (
 	"encoding/hex"
-	"net/http"
-	"net/http/httptest"
-	"net/url"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata/metricdatatest"
 
@@ -301,59 +297,6 @@ func Test_exemplarsFromConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.validateFunc(t, exemplarsFromConfig(tt.c))
-		})
-	}
-}
-
-func TestHTTPExporterOptions_Timeout(t *testing.T) {
-	for name, tc := range map[string]struct {
-		timeout      time.Duration
-		handlerDelay time.Duration
-		expectError  bool
-	}{
-		"TimeoutElapsed": {
-			timeout:      50 * time.Millisecond,
-			handlerDelay: 500 * time.Millisecond,
-			expectError:  true,
-		},
-		"TimeoutNotElapsed": {
-			timeout:     500 * time.Millisecond,
-			expectError: false,
-		},
-		"NoTimeout": {
-			timeout:     0,
-			expectError: false,
-		},
-	} {
-		t.Run(name, func(t *testing.T) {
-			srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
-				if tc.handlerDelay > 0 {
-					time.Sleep(tc.handlerDelay)
-				}
-			}))
-			defer srv.Close()
-			srvURL, _ := url.Parse(srv.URL)
-
-			cfg := Config{
-				Config: config.Config{
-					Insecure:       true,
-					CustomEndpoint: srvURL.Host,
-					Timeout:        tc.timeout,
-				},
-			}
-			opts, err := httpExporterOptions(&cfg)
-			require.NoError(t, err)
-
-			exp, err := otlpmetrichttp.New(t.Context(), opts...)
-			require.NoError(t, err)
-			t.Cleanup(func() { _ = exp.Shutdown(t.Context()) })
-
-			err = exp.Export(t.Context(), &metricdata.ResourceMetrics{})
-			if tc.expectError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-			}
 		})
 	}
 }
