@@ -265,7 +265,7 @@ func (c *Config) CommonFlags(fs *pflag.FlagSet) {
 	fs.Float64Var(&c.Rate, "rate", c.Rate, "Approximately how many metrics/spans/logs per second each worker should generate. Zero means no throttling.")
 	fs.Var(&c.TotalDuration, "duration", "For how long to run the test. Use 'inf' for infinite duration.")
 	fs.DurationVar(&c.ReportingInterval, "interval", c.ReportingInterval, "Reporting interval")
-	fs.DurationVar(&c.Timeout, "timeout", c.Timeout, "Maximum time to wait for the signals to reach destination. Zero or unset will use the default (10s).")
+	fs.DurationVar(&c.Timeout, "timeout", c.Timeout, "Maximum time to wait for the signals to reach destination.")
 
 	fs.StringVar(&c.CustomEndpoint, "otlp-endpoint", c.CustomEndpoint, "Destination endpoint for exporting logs, metrics and traces")
 	fs.BoolVar(&c.Insecure, "otlp-insecure", c.Insecure, "Whether to enable client transport security for the exporter's grpc or http connection")
@@ -315,7 +315,7 @@ func (c *Config) SetDefaults() {
 	c.Rate = 0
 	c.TotalDuration = types.DurationWithInf(0)
 	c.ReportingInterval = 1 * time.Second
-	c.Timeout = 0
+	c.Timeout = 10 * time.Second
 	c.CustomEndpoint = ""
 	c.Insecure = false
 	c.InsecureSkipVerify = false
